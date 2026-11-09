@@ -1,0 +1,2 @@
+{"timestamp":"2026-11-08T23:29:00+00:00","content_id":"7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012","creator_id":"demo-user","guess":"human","model_score":0.29,"style_score":0.38,"combined_score":0.33,"label":"We think this was probably written by a person.","status":"decided"}
+{"timestamp":"2026-11-08T23:29:05+00:00","content_id":"7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012","creator_id":"demo-user","event":"appeal","status":"under_review","reasoning":"This was my own writing and the score feels wrong."}
