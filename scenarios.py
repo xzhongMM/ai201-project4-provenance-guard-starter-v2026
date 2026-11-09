@@ -32,11 +32,16 @@ SCENARIOS = [
             "The train was late and everyone in the station seemed tired in different ways. I watched the platform fill and empty again while I waited, then I realized the delay had made the whole morning feel more human than it had any right to be.",
             "I made tea before I started writing because I wanted a quieter room and a slower beginning. The first draft was stiff, but the second one sounded like me again, and that matters more than any one sentence.",
             "The meeting ended with a vague sense of progress and a few clearer actions. I wrote them down before I forgot them, and the list was enough to turn an ordinary afternoon into something I could act on.",
+            "I missed the first bus and waited beside the library until the next one came. The delay was annoying, but it gave me time to finish a chapter I had been carrying around all week.",
+            "The kitchen was noisy while everyone made dinner, so I took my book to the back room. I read for twenty minutes, then came back when the food was ready and the conversation had settled down.",
+            "I started the garden late this year and planted only a few things. The tomatoes are taking their time, but the herbs have already filled the small pots by the window.",
+            "After work I walked the longer route home because the short one felt too crowded. I noticed a new mural on the brick wall and sent a picture to my sister when I got inside.",
+            "My old notebook is full of lists that no longer matter. I kept it anyway, because a few pages still remind me what I was trying to figure out at the time.",
         ],
     },
     {
         "name": "label coverage",
-        "criterion": 2,
+        "criterion": 3,
         "texts": [
             "The system is designed to improve efficiency and reduce friction across the workflow. It manages the core tasks, supports consistent output, and helps maintain a clear operational process while preserving quality and reliability.",
             "I walked past the bakery on the corner and noticed the window was fogged up from the early heat. The pastries looked too fresh to resist, so I bought one and stood outside for a minute just to let the morning settle.",
@@ -45,7 +50,7 @@ SCENARIOS = [
     },
     {
         "name": "score separation",
-        "criterion": 3,
+        "criterion": 2,
         "texts": [
             "The weekend was quiet and the streets felt slow in the best way. I walked home with my hands in my pockets and noticed the light had changed without me noticing it. The small shift in the afternoon made everything seem easier to understand.",
             "The framework is optimized for scalability, transparency, and operational continuity across multiple deployment scenarios. It synthesizes the most relevant signals into a consistent, adaptive model for reliable results and measurable performance improvements.",
@@ -53,7 +58,7 @@ SCENARIOS = [
     },
     {
         "name": "bad input",
-        "criterion": 4,
+        "criterion": 5,
         "bodies": [
             {"text": "", "creator_id": "eval_bad_empty"},
             {"creator_id": "eval_bad_missing"},
@@ -63,7 +68,9 @@ SCENARIOS = [
     },
     {
         "name": "appeal path",
-        "criterion": 5,
+        "criterion": 4,
+        "appeal": True,
+        "appeal_reasoning": "This was my own writing; please review the decision.",
         "texts": [
             "A short writer-facing example for the appeal flow. This text is deliberately ordinary so the endpoint can be exercised without the score itself becoming the story.",
         ],
