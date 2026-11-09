@@ -1,0 +1,8 @@
+id,family,targets,send_as,raw_body,content_type
+F01,flood_same_creator,rate-limit,json,"{""text"":""same creator flood 1"",""creator_id"":""shared_flood""}",application/json
+F02,flood_same_creator,rate-limit,json,"{""text"":""same creator flood 2"",""creator_id"":""shared_flood""}",application/json
+F03,flood_same_creator,rate-limit,json,"{""text"":""same creator flood 3"",""creator_id"":""shared_flood""}",application/json
+F04,flood_same_creator,rate-limit,json,"{""text"":""same creator flood 4"",""creator_id"":""shared_flood""}",application/json
+F05,flood_same_creator,rate-limit,json,"{""text"":""same creator flood 5"",""creator_id"":""shared_flood""}",application/json
+M01,bad_json,malformed-request,raw,"{not valid json}",application/json
+M02,missing_text,malformed-request,json,"{""creator_id"":""missing-text""}",application/json
