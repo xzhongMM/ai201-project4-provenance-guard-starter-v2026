@@ -48,82 +48,71 @@ def words(text: str) -> list[str]:
 # ── The three measures — YOU BUILD THESE ─────────────────────────────────────
 
 def sentence_length_spread(text: str) -> float:
+    """Relative sentence-length variability. Higher means more varied.
+
+    For AI-ish writing, sentence lengths are often unusually regular, so this
+    measure drops on machine-like prose. We put it on a comparable scale by
+    dividing by the mean sentence length.
     """
-    How much sentence length varies. ← TODO
+    parts = sentences(text)
+    if len(parts) < 2:
+        return 0.0
 
-    Returns:
-        A float. Decide yourself what scale it's on and which direction means
-        "more human" — then write that down, because your combining rule
-        depends on knowing it.
+    lengths = [len(words(p)) for p in parts]
+    mean_len = sum(lengths) / len(lengths)
+    if mean_len == 0:
+        return 0.0
 
-    A hint on what you're reaching for: the standard deviation of sentence
-    lengths, probably divided by the mean so a long text and a short one are
-    comparable. `statistics.stdev` is imported for you.
-
-    Watch the edge case: a one-sentence submission has no spread at all, and
-    `stdev` raises on fewer than two values. Decide what that should return
-    before the attack set decides for you.
-    """
-    # TODO: replace this
-    return 0.0
+    spread = statistics.stdev(lengths) if len(lengths) > 1 else 0.0
+    return spread / mean_len
 
 
 def type_token_ratio(text: str) -> float:
-    """
-    Unique words over total words. ← TODO
-
-    Returns:
-        A float between 0 and 1. Higher means more varied vocabulary.
-
-    Worth knowing before you rely on it: this measure falls as text gets
-    longer, because common words repeat. Two texts of different lengths aren't
-    directly comparable on it, and if your test inputs vary a lot in length,
-    that alone can look like a signal.
-    """
-    # TODO: replace this
-    return 0.0
+    """Unique words divided by total words; higher means more varied vocabulary."""
+    words_list = words(text)
+    if not words_list:
+        return 0.0
+    unique = set(words_list)
+    return len(unique) / len(words_list)
 
 
 def punctuation_density(text: str) -> float:
-    """
-    How much punctuation, relative to length. ← TODO
+    """Punctuation count relative to the length of the text."""
+    if not text:
+        return 0.0
 
-    Returns:
-        A float. Whether you count all punctuation or only some kinds — commas,
-        semicolons, dashes — is a real choice. Semicolons and em dashes are
-        more interesting than full stops, because they vary more between
-        writers.
-    """
-    # TODO: replace this
-    return 0.0
+    punctuation = re.findall(r"[;:,.!?—\-\(\)\[\]]", text)
+    length = len(text)
+    if length == 0:
+        return 0.0
+    return len(punctuation) / length
 
 
 # ── Combining them ───────────────────────────────────────────────────────────
 
 def style_signal(text: str) -> float:
-    """
-    The style signal as a 0–1 score. **Higher means more likely AI.** ← TODO
+    """0–1 AI-likelihood based on stylistic shape of the text."""
+    if not isinstance(text, str):
+        raise ValueError("text must be a string")
 
-    Combine your three measures into one number. Same direction as
-    `detector.model_signal`, so that `scoring.combine_signals` can treat them
-    the same way — if one of your signals runs backwards, everything above it
-    is wrong in a way that's hard to see.
+    text = text.strip()
+    if not text:
+        return 0.5
 
-    Two things to decide and write down:
+    spread = sentence_length_spread(text)
+    vocab = type_token_ratio(text)
+    punct = punctuation_density(text)
 
-      1. Which direction each measure points. Low spread means more AI-ish, so
-         it needs flipping. Work out which of your three need that.
-      2. How to get each onto a comparable scale. A raw type-token ratio sits
-         between 0 and 1; a raw punctuation count doesn't. Adding them
-         unscaled means whichever has the bigger numbers wins by default.
+    spread_component = 1.0 / (1.0 + spread)
+    vocab_component = 1.0 - vocab
+    punctuation_component = 1.0 - min(punct / 0.06, 1.0)
 
-    Test it on the four calibration inputs from Milestone 4 — clearly AI,
-    clearly human, plain conventional human writing, lightly-edited AI — before
-    you trust it. Plain and ordinary, not formal: formal prose reads as *human*
-    to signal one, and it is plain writing that gets accused.
-    """
-    # TODO: replace this
-    return 0.5
+    score = (
+        0.45 * spread_component
+        + 0.35 * vocab_component
+        + 0.20 * punctuation_component
+    )
+    return round(min(max(score, 0.0), 1.0), 4)
 
 
 if __name__ == "__main__":
