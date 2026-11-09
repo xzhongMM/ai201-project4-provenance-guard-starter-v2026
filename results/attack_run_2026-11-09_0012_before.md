@@ -1,8 +1,8 @@
-# Attack run — after
+# Attack run — before
 
 - Produced by: `run_attacks.py::main`
 - Service: `app.py::submit`
-- 12 attacks · 2026-11-08 23:38
+- 12 attacks · 2026-11-09 00:12
 - Auto-marked BROKE (5xx, crash, no response): **0**
 - Left for you to judge: **12**
 
@@ -16,16 +16,16 @@ audit log when you go looking for the ten entries to paste.
 
 | ID | Family | Targeting | Status | Content ID | Guess | Score | Verdict |
 |---|---|---|---|---|---|---|---|
-| A01 | false_positive | flag-human | 200 | `32075f84-6b29-42e8-a6ca-0d614a4be62c` | unsure | 0.503 |  |
-| A02 | plain_ai | flag-ai | 200 | `a28b1226-06b8-4ed3-b625-cb43146a1d3d` | unsure | 0.478 |  |
-| A03 | prompt_injection | model-evasion | 200 | `2d372ea1-fde1-47e0-87c4-4d672418e70c` | human | 0.419 |  |
-| A04 | style_evasion | shape-evasion | 200 | `b486adf6-18d8-4d9f-a522-2902500ba0ef` | human | 0.152 |  |
-| A05 | whitespace_noise | shape-evasion | 200 | `47398966-f206-4d9b-b4f1-4882ceef2b42` | ai | 0.876 |  |
-| F01 | flood_same_creator | rate-limit | 200 | `b2d4cd5b-9329-4714-b9be-a6f91952b41f` | human | 0.260 |  |
-| F02 | flood_same_creator | rate-limit | 200 | `05969ea2-8629-48a0-a69c-76133b01b7ef` | human | 0.260 |  |
-| F03 | flood_same_creator | rate-limit | 200 | `a26ffda5-b125-4c31-a18d-913336b54f76` | human | 0.260 |  |
-| F04 | flood_same_creator | rate-limit | 200 | `b3e10751-994c-46a7-b4cc-085ff1a97c77` | human | 0.260 |  |
-| F05 | flood_same_creator | rate-limit | 200 | `5566455d-af30-47ec-bab6-129033de48a8` | human | 0.260 |  |
+| A01 | false_positive | flag-human | 200 | `8b13cb6f-b639-4d1d-bd28-6f789c91be06` | unsure | 0.503 |  |
+| A02 | plain_ai | flag-ai | 200 | `9fcb9eaf-9988-49eb-a713-8f2970ec6149` | unsure | 0.478 |  |
+| A03 | prompt_injection | model-evasion | 200 | `51567c88-4fca-442c-ac16-4420a7462bd9` | unsure | 0.419 |  |
+| A04 | style_evasion | shape-evasion | 200 | `26dde914-67be-409e-ab3b-9eaf93cb8918` | human | 0.152 |  |
+| A05 | whitespace_noise | shape-evasion | 200 | `28e64ab4-97e7-4a30-88d0-3cc30a2a6d04` | ai | 0.876 |  |
+| F01 | flood_same_creator | rate-limit | 200 | `d02bb2eb-a7c4-4cb0-90d0-e65816066283` | human | 0.260 |  |
+| F02 | flood_same_creator | rate-limit | 200 | `17f884eb-1cc8-4901-a5b0-64de5227753f` | human | 0.260 |  |
+| F03 | flood_same_creator | rate-limit | 200 | `c7e0281b-b0cc-4979-bf9b-ed4b490e6ca8` | human | 0.260 |  |
+| F04 | flood_same_creator | rate-limit | 200 | `f874421b-71ec-470e-8c4e-5506979714b7` | human | 0.260 |  |
+| F05 | flood_same_creator | rate-limit | 200 | `d8f2098f-0d65-4ef5-9418-6d7255935802` | human | 0.260 |  |
 | M01 | bad_json | malformed-request | 400 | `—` | — | — |  |
 | M02 | missing_text | malformed-request | 400 | `—` | — | — |  |
 
@@ -63,7 +63,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "A01",
   "status": 200,
-  "content_id": "32075f84-6b29-42e8-a6ca-0d614a4be62c",
+  "content_id": "8b13cb6f-b639-4d1d-bd28-6f789c91be06",
   "creator_id": "attacker_A01",
   "guess": "unsure",
   "confidence": 0.5033,
@@ -83,7 +83,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "A02",
   "status": 200,
-  "content_id": "a28b1226-06b8-4ed3-b625-cb43146a1d3d",
+  "content_id": "9fcb9eaf-9988-49eb-a713-8f2970ec6149",
   "creator_id": "attacker_A02",
   "guess": "unsure",
   "confidence": 0.478,
@@ -103,13 +103,13 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "A03",
   "status": 200,
-  "content_id": "2d372ea1-fde1-47e0-87c4-4d672418e70c",
+  "content_id": "51567c88-4fca-442c-ac16-4420a7462bd9",
   "creator_id": "attacker_A03",
-  "guess": "human",
+  "guess": "unsure",
   "confidence": 0.4194,
   "model_score": 0.2908,
   "style_score": 0.6122,
-  "label": "We think this was probably written by a person.",
+  "label": "We are not confident either way; this may have been written by a person or by AI.",
   "error": null,
   "verdict": ""
 }
@@ -123,7 +123,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "A04",
   "status": 200,
-  "content_id": "b486adf6-18d8-4d9f-a522-2902500ba0ef",
+  "content_id": "26dde914-67be-409e-ab3b-9eaf93cb8918",
   "creator_id": "attacker_A04",
   "guess": "human",
   "confidence": 0.1524,
@@ -143,7 +143,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "A05",
   "status": 200,
-  "content_id": "47398966-f206-4d9b-b4f1-4882ceef2b42",
+  "content_id": "28e64ab4-97e7-4a30-88d0-3cc30a2a6d04",
   "creator_id": "attacker_A05",
   "guess": "ai",
   "confidence": 0.876,
@@ -163,7 +163,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "F01",
   "status": 200,
-  "content_id": "b2d4cd5b-9329-4714-b9be-a6f91952b41f",
+  "content_id": "d02bb2eb-a7c4-4cb0-90d0-e65816066283",
   "creator_id": "shared_flood",
   "guess": "human",
   "confidence": 0.26,
@@ -183,7 +183,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "F02",
   "status": 200,
-  "content_id": "05969ea2-8629-48a0-a69c-76133b01b7ef",
+  "content_id": "17f884eb-1cc8-4901-a5b0-64de5227753f",
   "creator_id": "shared_flood",
   "guess": "human",
   "confidence": 0.26,
@@ -203,7 +203,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "F03",
   "status": 200,
-  "content_id": "a26ffda5-b125-4c31-a18d-913336b54f76",
+  "content_id": "c7e0281b-b0cc-4979-bf9b-ed4b490e6ca8",
   "creator_id": "shared_flood",
   "guess": "human",
   "confidence": 0.26,
@@ -223,7 +223,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "F04",
   "status": 200,
-  "content_id": "b3e10751-994c-46a7-b4cc-085ff1a97c77",
+  "content_id": "f874421b-71ec-470e-8c4e-5506979714b7",
   "creator_id": "shared_flood",
   "guess": "human",
   "confidence": 0.26,
@@ -243,7 +243,7 @@ README — the ones that show something, not the ten easiest.
 {
   "id": "F05",
   "status": 200,
-  "content_id": "5566455d-af30-47ec-bab6-129033de48a8",
+  "content_id": "d8f2098f-0d65-4ef5-9418-6d7255935802",
   "creator_id": "shared_flood",
   "guess": "human",
   "confidence": 0.26,
