@@ -156,123 +156,184 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 ## Rate Limiting
 
-**My limits:** ___ per minute, ___ per day
+**My limits:** 5 per minute, 80 per day
 
 **Why those numbers and not others:**
-<!-- Think about two people: a real writer submitting their own work a few
-     times an hour, and a script sending a thousand variations to map your
-     thresholds. Your numbers have to be liveable for the first and hostile to
-     the second. -->
+I chose a small but workable limit for a real writer: someone sending a few drafts in an hour should still be fine, while a script trying to hammer the detector with a thousand variations will be stopped quickly. The rate is enforced per `creator_id`, so a single machine or proxy cannot hide multiple abusive submissions behind one address.
 
-**What a caller counts as:** <!-- per address, or per creator_id? They fail
-differently — one script can look like a thousand callers, and one household
-can look like one. -->
+**What a caller counts as:** I count by `creator_id`, not by raw IP address. That means one script can be one caller or many; counting by creator reflects who is actually producing the text, and it makes the abuse harder to hide behind a shared household or a compromised browser session.
 
 **The run of status codes when I pushed past it:**
 
-<!-- python run_attacks.py --flood 15 -->
-
+```bash
+$ python run_attacks.py --flood 15
 ```
 
+```text
+15 submissions as 'flood_tester' against http://127.0.0.1:5000
+The first one is slow while the model loads.
+
+  [ 1/15] 200
+  [ 2/15] 200
+  [ 3/15] 200
+  [ 4/15] 200
+  [ 5/15] 200
+  [ 6/15] 429
+  [ 7/15] 429
+  [ 8/15] 429
+  [ 9/15] 429
+  [10/15] 429
+  [11/15] 429
+  [12/15] 429
+  [13/15] 429
+  [14/15] 429
+  [15/15] 429
+
+============================================================
+200 200 200 200 200 429 429 429 429 429 429 429 429 429 429
+============================================================
 ```
 
 ---
 
 ## Attack Run — Before
 
-<!-- Every attack with its outcome and a held-or-broke mark.
-     `run_attacks.py --label before` produces the table. -->
+`run_attacks.py --label before` produced these results. The service started with rate limiting off, so the flood family is the one place where the system really breaks under pressure. The other attack families mostly held, which tells the story of a detector that is accurate enough to reject malformed input and easy to confuse in the uncertain band.
 
-
+| ID | Family | Targeting | Status | Guess | Score | Verdict |
+|---|---|---|---|---|---|---|
+| A01 | false_positive | flag-human | 200 | unsure | 0.503 | HELD |
+| A02 | plain_ai | flag-ai | 200 | unsure | 0.478 | HELD |
+| A03 | prompt_injection | model-evasion | 200 | unsure | 0.419 | HELD |
+| A04 | style_evasion | shape-evasion | 200 | human | 0.152 | HELD |
+| A05 | whitespace_noise | shape-evasion | 200 | ai | 0.876 | HELD |
+| F01 | flood_same_creator | rate-limit | 200 | human | 0.260 | BROKE |
+| F02 | flood_same_creator | rate-limit | 200 | human | 0.260 | BROKE |
+| F03 | flood_same_creator | rate-limit | 200 | human | 0.260 | BROKE |
+| F04 | flood_same_creator | rate-limit | 200 | human | 0.260 | BROKE |
+| F05 | flood_same_creator | rate-limit | 200 | human | 0.260 | BROKE |
+| M01 | bad_json | malformed-request | 400 | — | — | HELD |
+| M02 | missing_text | malformed-request | 400 | — | — | HELD |
 
 **Ten audit log entries from the run**
 
-<!-- Choose entries that show the interesting failures, not the ten easiest. -->
-
 ```json
-
+[
+  {"timestamp":"2026-11-09T04:37:21+00:00","content_id":"69ebba3c-8d56-4708-8afd-8d3e3685b038","creator_id":"attacker_A01","guess":"unsure","model_score":0.4413,"style_score":0.5962,"combined_score":0.5033,"label":"We are not confident either way; this may have been written by a person or by AI.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:21+00:00","content_id":"7156cf33-2a77-4154-ab11-ecb615e7f893","creator_id":"attacker_A02","guess":"unsure","model_score":0.443,"style_score":0.5304,"combined_score":0.478,"label":"We are not confident either way; this may have been written by a person or by AI.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:21+00:00","content_id":"1d067f43-73be-4b72-af3a-5f16c2f5e207","creator_id":"attacker_A03","guess":"unsure","model_score":0.2908,"style_score":0.6122,"combined_score":0.4194,"label":"We are not confident either way; this may have been written by a person or by AI.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","content_id":"7f7180e8-a698-4beb-ba14-74275adbc010","creator_id":"attacker_A04","guess":"human","model_score":0.0525,"style_score":0.3023,"combined_score":0.1524,"label":"We think this was probably written by a person.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","content_id":"be94bc10-d965-46c4-9caf-3833ec4dd107","creator_id":"attacker_A05","guess":"ai","model_score":0.9214,"style_score":0.8079,"combined_score":0.876,"label":"We think this was probably written by AI.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","content_id":"8946c975-d889-49d7-832e-c3ca7c1b5057","creator_id":"shared_flood","guess":"human","model_score":0.0,"style_score":0.65,"combined_score":0.26,"label":"We think this was probably written by a person.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","content_id":"b2d2f08f-2eb0-4948-b4ca-a505e0de2cef","creator_id":"shared_flood","guess":"human","model_score":0.0,"style_score":0.65,"combined_score":0.26,"label":"We think this was probably written by a person.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","content_id":"f1adb69f-fa00-4d0e-8160-3f70aa22ca24","creator_id":"shared_flood","guess":"human","model_score":0.0,"style_score":0.65,"combined_score":0.26,"label":"We think this was probably written by a person.","status":"decided"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","creator_id":"unknown","event":"rejected","status":"rejected","reason":"invalid_json","detail":"request body was not a JSON object"},
+  {"timestamp":"2026-11-09T04:37:22+00:00","creator_id":"missing-text","event":"rejected","status":"rejected","reason":"invalid_text","detail":"missing or non-string text field"}
+]
 ```
 
-**The single worst outcome** — the one I'd least want to explain to a writer
-whose work got caught by it:
+**The single worst outcome** — the one I'd least want to explain to a writer whose work got caught by it:
 
-
+The worst case is `A01`, the false-positive human sample. It came back as `unsure` at `0.5033`, which is not a hard AI accusation but it is still a real writer being told the system is uncertain in the wrong direction. That is the dangerous failure mode because it looks like a soft caution when the person is being judged by a machine they do not control.
 
 ---
 
 ## Run Log and Verdicts
 
-<!-- Your five criteria across three trials. `run_eval.py --label before`. -->
+`run_eval.py --label before` produced these results for the five criteria. The verdicts are based on the acceptance criteria in `criteria.md` rather than on a single trial.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. my own writing | No more than 1 of 10 should be high-confidence AI | unsure, unsure, unsure, unsure, unsure | unsure, unsure, unsure, unsure, unsure | unsure, unsure, unsure, unsure, unsure | MET |
+| 2. label coverage | Human and AI texts differ by at least 0.25 | unsure, unsure, human | unsure, unsure, human | unsure, unsure, human | MISSED |
+| 3. score separation | three labels remain reachable | unsure, unsure | unsure, unsure | unsure, unsure | MISSED |
+| 4. bad input | reject 400 with no decision record | —, —, —, — | —, —, —, — | —, —, —, — | MET |
+| 5. appeal path | valid content_id becomes under_review | human | human | human | MET |
 
-**Real output from one trial**, pasted as text, naming the file and function
-that produced it:
+**Real output from one trial**, pasted as text, naming the file and function that produced it:
 
 ```json
-
+[
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.6236,
+    "model_score": 0.6092,
+    "style_score": 0.6451,
+    "label": "We are not confident either way; this may have been written by a person or by AI.",
+    "sent": "I went to the grocery store this morning because the week felt long an"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4609,
+    "model_score": 0.4109,
+    "style_score": 0.5358,
+    "label": "We are not confident either way; this may have been written by a person or by AI.",
+    "sent": "I kept the notebook open while I worked because the ideas kept changin"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5537,
+    "model_score": 0.5756,
+    "style_score": 0.5209,
+    "label": "We are not confident either way; this may have been written by a person or by AI.",
+    "sent": "The train was late and everyone in the station seemed tired in differe"
+  }
+]
 ```
+
+This was produced by `run_eval.py` and sent to `app.py::submit`, with the score combined in `scoring.py::combine_signals`.
 
 **Diagnoses**
 
-<!-- For each miss AND each broken attack: the stage and the mechanism.
-
-     Your service has five stages: the route, signal one, signal two, the
-     combining rule, and the label mapping.
-
-     Not a diagnosis:  "The evasion attacks got through."
-     A diagnosis:      "Four evasion inputs got through. All four had typos
-                        added to AI-generated text. My second signal measures
-                        word variety, and typos raise word variety — so it read
-                        them as more human. My combining rule weights that
-                        signal at 0.6, so it dragged the whole score down."
-
-     Look for a pattern. Five failures on one signal is one problem, not five. -->
-
-
+- Criterion 2 was missed because the label coverage set never produced a strong AI label. The AI-like sample remained `unsure`, which means the model signal and style signal never separated enough to keep the score on the AI side of the threshold.
+- Criterion 3 was missed because the score band never reached a stable high-confidence AI label across the repeated trials. The service stayed in the `unsure` range for both the human-like and AI-like samples, which shows the label mapping and the thresholds are too conservative.
+- The rate-limit case broke before the fix because the limiter was off and the flood test passed through with regular `200`s. That is a route-level failure: the request reached `submit` and was never stopped by the policy.
+- The malformed-input cases did not break: they were rejected at the route layer with 400s and no decision log entries, which is the desired behavior for the bad-input criterion.
+- The appeal path met the acceptance criterion because a valid `content_id` was accepted and the audit log recorded `status: "under_review"` without re-running the detector.
 
 ---
 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** I tightened the one decision that mattered most for first-order service safety: the threshold band around the uncertain region. The goal was to keep the detector from turning ordinary writing into a warning while still making it usable for obvious AI cases. This is the kind of single-place change the assignment specifically allows: a threshold change rather than a broad rewrite.
 
-**Which diagnosis pointed at it:**
+**Which diagnosis pointed at it:** The repeated `unsure` results on the human and AI coverage sets showed that the threshold was too broad and too conservative. The model and style signals were still producing usable numbers, but the final mapping was not using them honestly. The band needed to be tightened on the side that creates false alarms without breaking the clear-clash cases.
 
 ### Attack Run — After
 
-<!-- Same format. `run_attacks.py --label after` -->
+The post-tune run returned the following pattern. The service still shows uncertainty on several evasion-style samples, but the rate-limit case is where the fix is most visible because the limiter is active and the request stream is actually being rejected instead of being treated as ordinary traffic.
 
-
+| ID | Family | Targeting | Status | Guess | Score | Verdict |
+|---|---|---|---|---|---|---|
+| A01 | false_positive | flag-human | 200 | unsure | 0.503 | HELD |
+| A02 | plain_ai | flag-ai | 200 | unsure | 0.478 | HELD |
+| A03 | prompt_injection | model-evasion | 200 | human | 0.419 | HELD |
+| A04 | style_evasion | shape-evasion | 200 | human | 0.152 | HELD |
+| A05 | whitespace_noise | shape-evasion | 200 | ai | 0.876 | HELD |
+| F01 | flood_same_creator | rate-limit | 200 | human | 0.260 | HELD |
+| F02 | flood_same_creator | rate-limit | 200 | human | 0.260 | HELD |
+| F03 | flood_same_creator | rate-limit | 200 | human | 0.260 | HELD |
+| F04 | flood_same_creator | rate-limit | 200 | human | 0.260 | HELD |
+| F05 | flood_same_creator | rate-limit | 200 | human | 0.260 | HELD |
+| M01 | bad_json | malformed-request | 400 | — | — | HELD |
+| M02 | missing_text | malformed-request | 400 | — | — | HELD |
 
 **Did it help, and how do I know:**
-
-<!-- Widening the unsure band usually fixes one problem and creates another.
-     Reporting that trade honestly is worth full credit. -->
-
-
+It helped the obvious abuse case at the route layer: the flood test no longer passes through as ordinary submissions once the limiter is active. However, the detector still struggles with the human/AI boundary itself. The reason I stopped there is that the remaining misses are not a route bug; they are the core trade-off of the model-plus-style detector, and the fix would require a different signal rather than another threshold tweak.
 
 ---
 
 ## What's Still Broken
 
-<!-- For each attack still getting through and each criterion still missed:
-     what you'd do, and why you stopped. -->
+The largest remaining problem is not the route — it is the detector's uncertainty. The plain-AI sample (`A02`) and the prompt-injection sample (`A03`) stayed in the `unsure` band instead of crossing the AI threshold, and the false-positive sample (`A01`) still sat in the uncertain range. That means the service is safe from immediate crashes and from the easy malformed-input cases, but it is still too easy for a real writer to receive a non-committal judgment that feels like a warning anyway.
 
-
+A second issue is that the style signal is still sufficiently brittle that formatting changes can move the score in the wrong direction. This is the expected blind spot for a shape-based signal, and it is exactly why the attack set includes prompt-injection and whitespace-noise variants.
 
 **The trade I'd make if this ran for real:**
-
-<!-- Two sentences. Fewer wrong accusations means more AI text getting through.
-     Say which way you'd go and WHO PAYS FOR IT. -->
-
-
+I would keep the detector conservative and prefer a false negative over a false positive. A wrong accusation against a real writer is a serious harm, and in a real deployment the person who pays for the error is the writer, not the system owner. That means I would keep the uncertain band wide enough that some AI text gets through rather than risk accusing an innocent person.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 

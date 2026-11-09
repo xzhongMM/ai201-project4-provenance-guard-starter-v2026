@@ -154,11 +154,12 @@ def health():
 # ── YOU BUILD THIS ────────────────────────────────────────────────────────────
 
 @app.post("/submit")
-# @limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
+@limiter.limit(f"{config.RATE_LIMIT_PER_MINUTE}/minute;{config.RATE_LIMIT_PER_DAY}/day")
 def submit():
     """Take a piece of text, score it, and return a decision."""
     payload = request.get_json(silent=True)
     if payload is None or not isinstance(payload, dict):
+        audit.log_rejection(creator_id="unknown", reason="invalid_json", detail="request body was not a JSON object")
         return jsonify({
             "error": "invalid_json",
             "message": "Request body must be a JSON object.",
@@ -168,6 +169,7 @@ def submit():
     creator_id = payload.get("creator_id")
 
     if not isinstance(text, str):
+        audit.log_rejection(creator_id=str(creator_id).strip() if creator_id is not None else "unknown", reason="invalid_text", detail="missing or non-string text field")
         return jsonify({
             "error": "invalid_text",
             "message": "Field 'text' is required and must be a string.",
@@ -175,12 +177,14 @@ def submit():
 
     text = text.strip()
     if not text:
+        audit.log_rejection(creator_id=str(creator_id).strip() if creator_id is not None else "unknown", reason="empty_text", detail="text was empty after stripping")
         return jsonify({
             "error": "invalid_text",
             "message": "Field 'text' cannot be empty.",
         }), 400
 
     if len(text) > 100000:
+        audit.log_rejection(creator_id=str(creator_id).strip() if creator_id is not None else "unknown", reason="oversized_text", detail=f"text length {len(text)} exceeds 100000")
         return jsonify({
             "error": "invalid_text",
             "message": "Field 'text' is too long to score safely.",
@@ -188,6 +192,7 @@ def submit():
 
     creator_id = str(creator_id).strip() if creator_id is not None else ""
     if not creator_id:
+        audit.log_rejection(creator_id="unknown", reason="missing_creator_id", detail="creator_id was absent or blank")
         return jsonify({
             "error": "invalid_creator_id",
             "message": "Field 'creator_id' is required.",

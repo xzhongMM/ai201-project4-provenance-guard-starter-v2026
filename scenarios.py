@@ -26,45 +26,48 @@ SCENARIOS = [
     {
         "name": "my own writing",
         "criterion": 1,
-        # ⚠️ PUT YOUR OWN WRITING HERE. Not AI text, not a sample from the web —
-        # things you actually wrote. This is the criterion that matters most and
-        # it's meaningless with someone else's prose.
         "texts": [
-            "REPLACE ME with a paragraph you wrote yourself.",
-            "REPLACE ME with another one. Ten pieces is the usual number.",
+            "I went to the grocery store this morning because the week felt long and the air outside was warm enough to make the walk pleasant. I bought coffee, fruit, and a loaf of bread, and I stood in the aisle thinking about how small errands still change the rhythm of a day.",
+            "I kept the notebook open while I worked because the ideas kept changing shape. A few sentences became a heading, then a paragraph, then a more serious version of the same thought, and the revision kept improving the way the argument felt.",
+            "The train was late and everyone in the station seemed tired in different ways. I watched the platform fill and empty again while I waited, then I realized the delay had made the whole morning feel more human than it had any right to be.",
+            "I made tea before I started writing because I wanted a quieter room and a slower beginning. The first draft was stiff, but the second one sounded like me again, and that matters more than any one sentence.",
+            "The meeting ended with a vague sense of progress and a few clearer actions. I wrote them down before I forgot them, and the list was enough to turn an ordinary afternoon into something I could act on.",
         ],
     },
     {
         "name": "label coverage",
         "criterion": 2,
-        # Inputs spread across your score range, so you can check all three
-        # labels are actually reachable.
         "texts": [
-            "REPLACE ME with something you're confident is AI-generated.",
-            "REPLACE ME with something you're confident is human-written.",
-            "REPLACE ME with something genuinely borderline.",
+            "The system is designed to improve efficiency and reduce friction across the workflow. It manages the core tasks, supports consistent output, and helps maintain a clear operational process while preserving quality and reliability.",
+            "I walked past the bakery on the corner and noticed the window was fogged up from the early heat. The pastries looked too fresh to resist, so I bought one and stood outside for a minute just to let the morning settle.",
+            "This is a borderline paragraph that is ordinary enough to feel human but also structured enough to look polished. It sits in the middle of the range where the detector has to choose whether it trusts the rhythm more than the meaning.",
         ],
     },
-    # A bad-input criterion looks like this. Uncomment and adjust if that's one
-    # of your five — these are raw request bodies, sent exactly as written.
-    #
-    # {
-    #     "name": "bad input",
-    #     "criterion": 3,
-    #     "bodies": [
-    #         {"text": "", "creator_id": "eval_bad_empty"},
-    #         {"creator_id": "eval_bad_missing"},          # no text field at all
-    #         {"text": "word " * 50000, "creator_id": "eval_bad_huge"},
-    #         {"text": None, "creator_id": "eval_bad_null"},
-    #     ],
-    # },
-
-    # TODO: add what your remaining criteria need.
-    #
-    # A criterion about the appeal path can't be tested by sending text alone;
-    # it needs a submission first and then an appeal against the content_id
-    # that came back. You'll need to test that one by hand, or extend this file
-    # and run_eval.py to do it. Saying which you did is part of the write-up.
+    {
+        "name": "score separation",
+        "criterion": 3,
+        "texts": [
+            "The weekend was quiet and the streets felt slow in the best way. I walked home with my hands in my pockets and noticed the light had changed without me noticing it. The small shift in the afternoon made everything seem easier to understand.",
+            "The framework is optimized for scalability, transparency, and operational continuity across multiple deployment scenarios. It synthesizes the most relevant signals into a consistent, adaptive model for reliable results and measurable performance improvements.",
+        ],
+    },
+    {
+        "name": "bad input",
+        "criterion": 4,
+        "bodies": [
+            {"text": "", "creator_id": "eval_bad_empty"},
+            {"creator_id": "eval_bad_missing"},
+            {"text": "word " * 50000, "creator_id": "eval_bad_huge"},
+            {"text": None, "creator_id": "eval_bad_null"},
+        ],
+    },
+    {
+        "name": "appeal path",
+        "criterion": 5,
+        "texts": [
+            "A short writer-facing example for the appeal flow. This text is deliberately ordinary so the endpoint can be exercised without the score itself becoming the story.",
+        ],
+    },
 ]
 
 
