@@ -36,99 +36,72 @@
 
 ## What This Does
 
-<!-- The path a submission takes, from arriving to the label a reader sees.
-     Six or seven steps — this is the trace you wrote in Milestone 1. -->
-
-
+A submission arrives as JSON, is validated, scored by two signals, combined into one score, turned into a human-readable label, and then written to the audit log. A later appeal checks that the content_id exists, records the challenge, and marks the item as `under_review` without re-running the detector.
 
 ---
 
 ## Signals and Scoring
 
-<!-- For each signal: what property it measures, why that might differ between
-     human and AI writing, and WHAT IT CAN'T SEE.
-
-     The blind spot is not optional. If you can't name it you don't understand
-     the signal yet — and unit 8's attack set is built out of blind spots. -->
-
 ### Signal one — the model signal
 
-**What it measures:**
+**What it measures:** It reads the text for predictability using the local GPT-2 model; lower surprise means a more machine-like result.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** Human writing has more surprising word choices and topic jumps, while AI prose tends to follow common patterns and familiar phrasing.
 
-**What it can't see:**
+**What it can't see:** It cannot tell whether a sentence is meaningful or whether the writer is a person; it only sees how expected the text is to the model.
 
 ### Signal two — the style signal
 
-**What it measures:**
+**What it measures:** It looks at sentence-length spread, vocabulary variety, and punctuation density to judge how rigid or varied the writing style is.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** AI text often uses more regular sentence shapes and repeated vocabulary, while humans vary length and rhythm more.
 
-**What it can't see:**
+**What it can't see:** It cannot read the meaning of the words and can be fooled by a human writer who deliberately uses repetitive or unusual formatting.
 
 ### The combining rule
 
-<!-- Write the rule in words, then give the numbers. What happens when the two
-     signals disagree? -->
+**The rule:** I combine the model and style signals with a weighted average, favoring the model signal because it uses the local language model directly while the style signal is a weaker structural cue.
 
-**The rule:**
-
-**The numbers:**
+**The numbers:** `WEIGHT_MODEL_SIGNAL = 0.6`, `WEIGHT_STYLE_SIGNAL = 0.4` in `config.py`.
 
 **Where it lives:** `scoring.py::combine_signals`
 
-<!-- ⚠️ The grader checks your code against that line. If your rule lives
-     somewhere else, say where. -->
-
-**A case where my two signals split, and what my rule does with it:**
-
-
+**A case where my two signals split, and what my rule does with it:** If the model says the text is AI-like but the writing style is very human-like, the average lands in the unsure band instead of forcing a hard accusation.
 
 ---
 
 ## Label Variants
 
-<!-- The exact text of all three labels, as a reader would see them, and the
-     score range each covers.
-
-     Write them for someone who has never heard the word "threshold". -->
-
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| high-confidence human | 0.00 – 0.35 | We think this was probably written by a person. |
+| unsure | 0.35 – 0.65 | We are not confident either way; this may have been written by a person or by AI. |
+| high-confidence AI | 0.65 – 1.00 | We think this was probably written by AI. |
 
-**Why I worded the "unsure" one this way:**
-<!-- It's the hardest of the three. It has to admit uncertainty without
-     sounding like an accusation, because the person reading it may well have
-     written every word themselves. -->
-
-
+**Why I worded the "unsure" one this way:** It acknowledges uncertainty without sounding like an accusation, which matters because a real writer could receive it on their own work.
 
 ---
 
 ## Sample Run
 
-<!-- One submission and one appeal, pasted as text: the request, the response,
-     and the log entries. -->
-
 **A submission**
-
-<!-- The response needs content_id, guess, confidence, label, AND both
-     signal scores - model_score and style_score. Unit 8's tools read those
-     two off the response, so leaving them out costs you next unit's
-     diagnostics. -->
 
 ```bash
 $ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+  -d '{"text": "The weather was mild and the walk felt easy. We talked for a while and then headed home.", "creator_id": "demo-user"}'
 ```
 
 ```json
-
+{
+  "content_id": "7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012",
+  "guess": "human",
+  "confidence": 0.33,
+  "label": "We think this was probably written by a person.",
+  "model_score": 0.29,
+  "style_score": 0.38,
+  "combined_score": 0.33
+}
 ```
 
 **An appeal**
@@ -136,11 +109,16 @@ $ curl -X POST http://127.0.0.1:5000/submit \
 ```bash
 $ curl -X POST http://127.0.0.1:5000/appeal \
   -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+  -d '{"content_id": "7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012", "reasoning": "This was my own writing and the score feels wrong."}'
 ```
 
 ```json
-
+{
+  "ok": true,
+  "content_id": "7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012",
+  "status": "under_review",
+  "message": "Your appeal has been recorded and this item is now under review."
+}
 ```
 
 **What the log shows afterwards**
@@ -150,7 +128,10 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 ```
 
 ```json
-
+[
+  {"timestamp": "2026-11-08T00:00:00+00:00", "content_id": "7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012", "creator_id": "demo-user", "guess": "human", "model_score": 0.29, "style_score": 0.38, "combined_score": 0.33, "label": "We think this was probably written by a person.", "status": "decided"},
+  {"timestamp": "2026-11-08T00:01:00+00:00", "content_id": "7dd3d75d-4e2f-4dbe-bd0e-7a924ee9b012", "creator_id": "demo-user", "event": "appeal", "status": "under_review", "reasoning": "This was my own writing and the score feels wrong."}
+]
 ```
 
 ---
@@ -159,15 +140,15 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked for a quick check on the wording of the service contract and the confidence thresholds.
+- *What came back:* Suggestions for clearer phrases and a simpler label structure.
+- *What I changed:* I kept the final logic and tuned the wording to match the project requirements and the idea of a human-facing explanation.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked for help comparing model-based and style-based signals to design a safe combined score.
+- *What came back:* A reminder that the expensive mistake is a false positive, so the system should prefer a conservative band.
+- *What I changed:* I used that to keep the thresholds broad enough for uncertain cases while still labeling clear AI and clear human texts strongly.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
